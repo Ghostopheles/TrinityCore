@@ -57,10 +57,12 @@ public:
             { "on",             HandleGMOnCommand,           rbac::RBAC_PERM_COMMAND_GM,             Console::No  },
             { "off",            HandleGMOffCommand,          rbac::RBAC_PERM_COMMAND_GM,             Console::No  },
             { "barber",         HandleGMBarberShopCommand,   rbac::RBAC_PERM_COMMAND_GM,             Console::No  },
-            { "seamlesstp",     HandleGMSeamlessPortCommand, rbac::RBAC_PERM_COMMAND_GM,             Console::Yes },
+            { "preloadworld",   HandleGMPreloadWorldCommand, rbac::RBAC_PERM_COMMAND_GM,             Console::No  },
+            { "seamlesstp",     HandleGMSeamlessPortCommand, rbac::RBAC_PERM_COMMAND_GM,             Console::No  },
             { "achievements",   HandleGMRewardAllAchievementsCommand, rbac::RBAC_PERM_COMMAND_GM,    Console::Yes },
             { "toys",           HandleGMRewardAllToysCommand,    rbac::RBAC_PERM_COMMAND_GM,         Console::Yes },
             { "mounts",         HandleGMRewardAllMountsCommand,    rbac::RBAC_PERM_COMMAND_GM,       Console::Yes },
+            { "transmog",       HandleGMRewardAllTransmogCommand,    rbac::RBAC_PERM_COMMAND_GM,         Console::Yes },
             { "transmogset",    HandleGMAddTransmogSetCommand,    rbac::RBAC_PERM_COMMAND_GM,        Console::Yes },
             { "commentator",    HandleGMCommentatorCommand,    rbac::RBAC_PERM_COMMAND_GM,           Console::Yes },
             { "hotfix",         HandleGMAddHotfixCommand,    rbac::RBAC_PERM_COMMAND_GM,             Console::Yes },
@@ -172,6 +174,46 @@ public:
         return false;
     }
 
+    static bool HandleGMRewardAllTransmogCommand(ChatHandler* handler)
+    {
+        if (WorldSession* session = handler->GetSession())
+        {
+            CollectionMgr collections(session);
+            for (ItemModifiedAppearanceEntry const* itemModifiedAppearance : sItemModifiedAppearanceStore)
+            {
+                collections.AddItemAppearance(itemModifiedAppearance->ItemID, itemModifiedAppearance->ItemAppearanceModifierID);
+            }
+
+            for (TransmogIllusionEntry const* illusion : sTransmogIllusionStore)
+            {
+                collections.AddTransmogIllusion(illusion->ID);
+            }
+
+            return true;
+        }
+
+        handler->SendSysMessage(LANG_USE_BOL);
+        handler->SetSentErrorMessage(true);
+        return false;
+    }
+
+    static bool HandleGMRewardAllAppearancesCommand(ChatHandler* handler)
+    {
+        if (WorldSession* session = handler->GetSession())
+        {
+            CollectionMgr collections(session);
+            for (TransmogSetEntry const* tmogSet : sTransmogSetStore)
+            {
+                collections.AddTransmogSet(tmogSet->ID);
+            }
+            return true;
+        }
+
+        handler->SendSysMessage(LANG_USE_BOL);
+        handler->SetSentErrorMessage(true);
+        return false;
+    }
+
     static bool HandleGMAddTransmogSetCommand(ChatHandler* handler, uint32 transmogSetID)
     {
         if (WorldSession* session = handler->GetSession())
@@ -186,14 +228,24 @@ public:
         return false;
     }
 
+    static bool HandleGMPreloadWorldCommand(ChatHandler* handler, uint32 mapID, float x, float y, float z)
+    {
+        Player* target = handler->getSelectedPlayer();
+        if (!target)
+            target = handler->GetSession()->GetPlayer();
+
+        target->SendPreloadWorld(mapID, x, y, z);
+
+        return true;
+    }
+
     static bool HandleGMSeamlessPortCommand(ChatHandler* handler, uint32 mapID, float x, float y, float z)
     {
         Player* target = handler->getSelectedPlayer();
         if (!target)
             target = handler->GetSession()->GetPlayer();
 
-        //target->TeleportTo(mapID, x, y, z, 0.0f, TELE_TO_SEAMLESS);
-        target->SendNewWorld(mapID, x, y, z);
+        target->TeleportTo(mapID, x, y, z, 0.0f, TELE_TO_SEAMLESS);
 
         return true;
     }
