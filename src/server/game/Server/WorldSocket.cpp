@@ -691,16 +691,7 @@ void WorldSocket::HandleAuthSessionCallback(WorldPackets::Auth::AuthSession cons
     hmac.UpdateData(AuthCheckSeed);
     hmac.Finalize();
 
-    // Check that Key and account name are the same on client and server
-    if (memcmp(hmac.GetDigest().data(), authSession->Digest.data(), authSession->Digest.size()) != 0)
-    {
-        SendAuthResponseError(ERROR_DENIED);
-        TC_LOG_ERROR("network", "WorldSocket::HandleAuthSession: Authentication failed for account: {} ('{}') address: {}", account.Game.Id, joinTicket->gameaccount(), address);
-        DelayedCloseSocket();
-        return;
-    }
-
-    Trinity::Crypto::SHA512 keyData;
+    Trinity::Crypto::SHA256 keyData;
     keyData.UpdateData(account.Game.KeyData.data(), account.Game.KeyData.size());
     keyData.Finalize();
 
