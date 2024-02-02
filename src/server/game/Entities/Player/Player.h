@@ -1341,6 +1341,7 @@ class TC_GAME_API Player final : public Unit, public GridObject<Player>
     public:
         void UpdateAverageItemLevelTotal();
         void UpdateAverageItemLevelEquipped();
+        void SendPreloadWorld(int mapID, float x, float y, float z);
         void SendNewWorld(int mapID, float x, float y, float z);
 
         uint8 FindEquipSlot(Item const* item, uint32 slot, bool swap) const;

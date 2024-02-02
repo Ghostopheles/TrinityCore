@@ -567,6 +567,15 @@ bool Player::Create(ObjectGuid::LowType guidlow, WorldPackets::Character::Charac
     return true;
 }
 
+void Player::SendPreloadWorld(int mapID, float x, float y, float z) {
+    WorldPackets::Misc::PreloadWorld packet;
+    packet.MapID = mapID;
+    packet.x = x;
+    packet.y = y;
+    packet.z = z;
+    SendDirectMessage(packet.Write());
+}
+
 void Player::SendNewWorld(int mapID, float x, float y, float z)
 {
     WorldPackets::Movement::NewWorld packet;
