@@ -567,6 +567,15 @@ bool Player::Create(ObjectGuid::LowType guidlow, WorldPackets::Character::Charac
     return true;
 }
 
+void Player::SendNewWorld(int mapID, float x, float y, float z)
+{
+    WorldPackets::Movement::NewWorld packet;
+    packet.MapID = mapID;
+    packet.Loc.Pos = Position(x, y, z);
+    packet.Reason = NEW_WORLD_SEAMLESS;
+    SendDirectMessage(packet.Write());
+}
+
 bool Player::StoreNewItemInBestSlots(uint32 itemId, uint32 amount, ItemContext context)
 {
     TC_LOG_DEBUG("entities.player.items", "Player::StoreNewItemInBestSlots: Player '{}' ({}) creates initial item (ItemID: {}, Count: {})",
