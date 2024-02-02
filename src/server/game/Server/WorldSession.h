@@ -34,6 +34,7 @@
 #include "Optional.h"
 #include "RaceMask.h"
 #include "SharedDefines.h"
+#include "ChatPackets.h"
 #include <boost/circular_buffer_fwd.hpp>
 #include <array>
 #include <map>
@@ -1189,6 +1190,7 @@ class TC_GAME_API WorldSession
         void HandleCharDeleteOpcode(WorldPackets::Character::CharDelete& charDelete);
         void HandleCharCreateOpcode(WorldPackets::Character::CreateCharacter& charCreate);
         void HandlePlayerLoginOpcode(WorldPackets::Character::PlayerLogin& playerLogin);
+        void HandleCommentatorModeOpcode(WorldPackets::Chat::CommentatorModeEnable& packet);
 
         void SendConnectToInstance(WorldPackets::Auth::ConnectToSerial serial);
         void HandleContinuePlayerLogin();
