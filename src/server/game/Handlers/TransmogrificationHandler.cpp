@@ -36,7 +36,6 @@ void WorldSession::HandleTransmogrifyItems(WorldPackets::Transmogrification::Tra
         return;
     }
 
-    int64 cost = 0;
     std::unordered_map<Item*, std::pair<uint32, uint32>> transmogItems;
     std::unordered_map<Item*, uint32> illusionItems;
 
@@ -114,9 +113,6 @@ void WorldSession::HandleTransmogrifyItems(WorldPackets::Transmogrification::Tra
 
             if (transmogItem.SecondaryItemModifiedAppearanceID > 0 && !validateAndStoreTransmogItem(itemTransmogrified, transmogItem.SecondaryItemModifiedAppearanceID, true))
                 return;
-
-            // add cost
-            cost += itemTransmogrified->GetSellPrice(_player);
         }
         else
             resetAppearanceItems.push_back(itemTransmogrified);
@@ -143,17 +139,9 @@ void WorldSession::HandleTransmogrifyItems(WorldPackets::Transmogrification::Tra
             }
 
             illusionItems[itemTransmogrified] = transmogItem.SpellItemEnchantmentID;
-            cost += illusion->TransmogCost;
         }
         else
             resetIllusionItems.push_back(itemTransmogrified);
-    }
-
-    if (!player->HasAuraType(SPELL_AURA_REMOVE_TRANSMOG_COST) && cost) // 0 cost if reverting look
-    {
-        if (!player->HasEnoughMoney(cost))
-            return;
-        player->ModifyMoney(-cost);
     }
 
     // Everything is fine, proceed
