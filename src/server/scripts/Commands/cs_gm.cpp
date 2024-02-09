@@ -47,30 +47,42 @@ public:
 
     ChatCommandTable GetCommands() const override
     {
+        static ChatCommandTable commentatorTable = {
+            { "name",   HandleGMCommentatorNameCommand,       rbac::RBAC_PERM_COMMAND_GM, Console::Yes },
+            { "",       HandleGMCommentatorCommand,           rbac::RBAC_PERM_COMMAND_GM, Console::Yes },
+        };
+
+        static ChatCommandTable cameraTable = {
+            { "name",   HandleGMCameraNameCommand,       rbac::RBAC_PERM_COMMAND_GM, Console::No },
+            { "",       HandleGMCameraCommand,           rbac::RBAC_PERM_COMMAND_GM, Console::No },
+        };
+
         static ChatCommandTable gmCommandTable =
         {
-            { "chat",           HandleGMChatCommand,         rbac::RBAC_PERM_COMMAND_GM_CHAT,        Console::No  },
-            { "fly",            HandleGMFlyCommand,          rbac::RBAC_PERM_COMMAND_GM_FLY,         Console::No  },
-            { "ingame",         HandleGMListIngameCommand,   rbac::RBAC_PERM_COMMAND_GM_INGAME,      Console::Yes },
-            { "list",           HandleGMListFullCommand,     rbac::RBAC_PERM_COMMAND_GM_LIST,        Console::Yes },
-            { "visible",        HandleGMVisibleCommand,      rbac::RBAC_PERM_COMMAND_GM_VISIBLE,     Console::No  },
-            { "on",             HandleGMOnCommand,           rbac::RBAC_PERM_COMMAND_GM,             Console::No  },
-            { "off",            HandleGMOffCommand,          rbac::RBAC_PERM_COMMAND_GM,             Console::No  },
-            { "barber",         HandleGMBarberShopCommand,   rbac::RBAC_PERM_COMMAND_GM,             Console::No  },
-            { "preloadworld",   HandleGMPreloadWorldCommand, rbac::RBAC_PERM_COMMAND_GM,             Console::No  },
-            { "seamlesstp",     HandleGMSeamlessPortCommand, rbac::RBAC_PERM_COMMAND_GM,             Console::No  },
-            { "achievements",   HandleGMRewardAllAchievementsCommand, rbac::RBAC_PERM_COMMAND_GM,    Console::Yes },
-            { "toys",           HandleGMRewardAllToysCommand,    rbac::RBAC_PERM_COMMAND_GM,         Console::Yes },
-            { "mounts",         HandleGMRewardAllMountsCommand,    rbac::RBAC_PERM_COMMAND_GM,       Console::Yes },
-            { "transmog",       HandleGMRewardAllTransmogCommand,    rbac::RBAC_PERM_COMMAND_GM,         Console::Yes },
-            { "transmogset",    HandleGMAddTransmogSetCommand,    rbac::RBAC_PERM_COMMAND_GM,        Console::Yes },
-            { "commentator",    HandleGMCommentatorCommand,    rbac::RBAC_PERM_COMMAND_GM,           Console::Yes },
-            { "hotfix",         HandleGMAddHotfixCommand,    rbac::RBAC_PERM_COMMAND_GM,             Console::Yes },
+            { "chat",           HandleGMChatCommand,                    rbac::RBAC_PERM_COMMAND_GM_CHAT,        Console::No  },
+            { "fly",            HandleGMFlyCommand,                     rbac::RBAC_PERM_COMMAND_GM_FLY,         Console::No  },
+            { "ingame",         HandleGMListIngameCommand,              rbac::RBAC_PERM_COMMAND_GM_INGAME,      Console::Yes },
+            { "list",           HandleGMListFullCommand,                rbac::RBAC_PERM_COMMAND_GM_LIST,        Console::Yes },
+            { "visible",        HandleGMVisibleCommand,                 rbac::RBAC_PERM_COMMAND_GM_VISIBLE,     Console::No  },
+            { "on",             HandleGMOnCommand,                      rbac::RBAC_PERM_COMMAND_GM,             Console::No  },
+            { "off",            HandleGMOffCommand,                     rbac::RBAC_PERM_COMMAND_GM,             Console::No  },
+            { "barber",         HandleGMBarberShopCommand,              rbac::RBAC_PERM_COMMAND_GM,             Console::No  },
+            { "preloadworld",   HandleGMPreloadWorldCommand,            rbac::RBAC_PERM_COMMAND_GM,             Console::No  },
+            { "seamlesstp",     HandleGMSeamlessPortCommand,            rbac::RBAC_PERM_COMMAND_GM,             Console::No  },
+            { "achievements",   HandleGMRewardAllAchievementsCommand,   rbac::RBAC_PERM_COMMAND_GM,             Console::Yes },
+            { "toys",           HandleGMRewardAllToysCommand,           rbac::RBAC_PERM_COMMAND_GM,             Console::Yes },
+            { "mounts",         HandleGMRewardAllMountsCommand,         rbac::RBAC_PERM_COMMAND_GM,             Console::Yes },
+            { "transmog",       HandleGMRewardAllTransmogCommand,       rbac::RBAC_PERM_COMMAND_GM,             Console::Yes },
+            { "transmogset",    HandleGMAddTransmogSetCommand,          rbac::RBAC_PERM_COMMAND_GM,             Console::Yes },
+            { "commentator",    commentatorTable },
+            { "camera",         cameraTable },
         };
+
         static ChatCommandTable commandTable =
         {
             { "gm", gmCommandTable },
         };
+
         return commandTable;
     }
 
@@ -250,37 +262,90 @@ public:
         return true;
     }
 
-    static bool HandleGMAddHotfixCommand(ChatHandler* handler, uint32 tableHash, uint32 recordId)
+    static bool HandleGMCommentatorNameCommand(ChatHandler* handler, Optional<PlayerIdentifier> player)
     {
-        return true;
-    }
+        if (!player)
+            player = PlayerIdentifier::FromTargetOrSelf(handler);
 
-    static bool HandleGMCommentatorCommand(ChatHandler* handler, uint32 action)
-    {
+        if (!player) {
+            TC_LOG_ERROR("network.commands", "Unable to find target for GMCommentatorNameCommand.");
+            return false;
+        }
+
         Player* target = handler->getSelectedPlayer();
-        switch (action)
-        {
-        case 0:
-            target->RemovePlayerFlag(PLAYER_FLAGS_UBER);
-            target->RemovePlayerFlag(PLAYER_FLAGS_COMMENTATOR2);
-            handler->PSendSysMessage("Commentator flags removed.");
-            break;
-        case 1:
+
+        bool enable = !target->HasPlayerFlag(PLAYER_FLAGS_UBER);
+
+        if (enable) {
             target->SetPlayerFlag(PLAYER_FLAGS_UBER);
             target->SetPlayerFlag(PLAYER_FLAGS_COMMENTATOR2);
             handler->PSendSysMessage("Commentator flags added.");
-            break;
-        case 2:
+        }
+        else {
+            target->RemovePlayerFlag(PLAYER_FLAGS_UBER);
+            target->RemovePlayerFlag(PLAYER_FLAGS_COMMENTATOR2);
+            handler->PSendSysMessage("Commentator flags removed.");
+        }
+
+        return true;
+    }
+
+    static bool HandleGMCommentatorCommand(ChatHandler* handler)
+    {
+        Player* target = handler->getSelectedPlayer();
+        bool enable = !target->HasPlayerFlag(PLAYER_FLAGS_UBER);
+
+        if (enable) {
+            target->SetPlayerFlag(PLAYER_FLAGS_UBER);
+            target->SetPlayerFlag(PLAYER_FLAGS_COMMENTATOR2);
+            handler->PSendSysMessage("Commentator flags added.");
+        } else {
+            target->RemovePlayerFlag(PLAYER_FLAGS_UBER);
+            target->RemovePlayerFlag(PLAYER_FLAGS_COMMENTATOR2);
+            handler->PSendSysMessage("Commentator flags removed.");
+        }
+
+        return true;
+    }
+
+    static bool HandleGMCameraNameCommand(ChatHandler* handler, Optional<PlayerIdentifier> player)
+    {
+        if (!player)
+            player = PlayerIdentifier::FromTargetOrSelf(handler);
+
+        if (!player) {
+            TC_LOG_ERROR("network.commands", "Unable to find target for GMCameraNameCommand.");
+            return false;
+        }
+
+        Player* target = handler->getSelectedPlayer();
+        bool enable = !target->HasPlayerFlag(PLAYER_FLAGS_UBER);
+
+        if (enable) {
             target->SetPlayerFlag(PLAYER_FLAGS_COMMENTATOR_CAMERA);
             handler->PSendSysMessage("Camera flag added.");
-            break;
-        case 3:
+        }
+        else {
             target->RemovePlayerFlag(PLAYER_FLAGS_COMMENTATOR_CAMERA);
             handler->PSendSysMessage("Camera flag removed.");
-            break;
-        default:
-            TC_LOG_ERROR("network.commands", "Received invalid action {} from GMCommentatorCommand", action);
-            break;
+        }
+
+        return true;
+    }
+
+    static bool HandleGMCameraCommand(ChatHandler* handler)
+    {
+        Player* target = handler->getSelectedPlayer();
+
+        bool enable = !target->HasPlayerFlag(PLAYER_FLAGS_COMMENTATOR_CAMERA);
+
+        if (enable) {
+            target->SetPlayerFlag(PLAYER_FLAGS_COMMENTATOR_CAMERA);
+            handler->PSendSysMessage("Camera flag added.");
+        }
+        else {
+            target->RemovePlayerFlag(PLAYER_FLAGS_COMMENTATOR_CAMERA);
+            handler->PSendSysMessage("Camera flag removed.");
         }
 
         return true;
