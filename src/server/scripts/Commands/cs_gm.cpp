@@ -36,7 +36,7 @@ EndScriptData */
 #include "MiscPackets.h"
 #include "AchievementMgr.h"
 #include "DB2Stores.cpp"
-#include "DB2HotfixGenerator.h"
+#include "BattlePetMgr.h"
 
 using namespace Trinity::ChatCommands;
 
@@ -71,6 +71,7 @@ public:
             { "seamlesstp",     HandleGMSeamlessPortCommand,            rbac::RBAC_PERM_COMMAND_GM,             Console::No  },
             { "achievements",   HandleGMRewardAllAchievementsCommand,   rbac::RBAC_PERM_COMMAND_GM,             Console::Yes },
             { "toys",           HandleGMRewardAllToysCommand,           rbac::RBAC_PERM_COMMAND_GM,             Console::Yes },
+            { "pets",           HandleGMRewardAllBattlePetsCommand,     rbac::RBAC_PERM_COMMAND_GM,             Console::Yes },
             { "mounts",         HandleGMRewardAllMountsCommand,         rbac::RBAC_PERM_COMMAND_GM,             Console::Yes },
             { "transmog",       HandleGMRewardAllTransmogCommand,       rbac::RBAC_PERM_COMMAND_GM,             Console::Yes },
             { "transmogset",    HandleGMAddTransmogSetCommand,          rbac::RBAC_PERM_COMMAND_GM,             Console::Yes },
@@ -217,6 +218,25 @@ public:
             for (TransmogSetEntry const* tmogSet : sTransmogSetStore)
             {
                 collections.AddTransmogSet(tmogSet->ID);
+            }
+            return true;
+        }
+
+        handler->SendSysMessage(LANG_USE_BOL);
+        handler->SetSentErrorMessage(true);
+        return false;
+    }
+
+    static bool HandleGMRewardAllBattlePetsCommand(ChatHandler* handler)
+    {
+        if (WorldSession* session = handler->GetSession())
+        {
+            BattlePets::BattlePetMgr collection(session);
+            for (BattlePetSpeciesEntry const* pet : sBattlePetSpeciesStore)
+            {
+                uint32 displayID = BattlePets::BattlePetMgr::SelectPetDisplay(pet);
+                uint16 breed = BattlePets::BattlePetMgr::RollPetBreed(pet->ID);
+                collection.AddPet(pet->ID, displayID, breed, BattlePets::BattlePetBreedQuality::Legendary, 25);
             }
             return true;
         }
