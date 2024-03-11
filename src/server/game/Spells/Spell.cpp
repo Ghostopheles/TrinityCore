@@ -830,8 +830,7 @@ void Spell::SelectSpellTargets()
         if (m_spellInfo->HasAttribute(SPELL_ATTR8_REQUIRES_LOCATION_TO_BE_ON_LIQUID_SURFACE))
         {
             ZLiquidStatus status = m_caster->GetMap()->GetLiquidStatus(m_caster->GetPhaseShift(),
-                m_targets.GetDstPos()->GetPositionX(), m_targets.GetDstPos()->GetPositionY(), m_targets.GetDstPos()->GetPositionZ(),
-                map_liquidHeaderTypeFlags::AllLiquids);
+                m_targets.GetDstPos()->GetPositionX(), m_targets.GetDstPos()->GetPositionY(), m_targets.GetDstPos()->GetPositionZ());
             if (!(status & (LIQUID_MAP_WATER_WALK | LIQUID_MAP_IN_WATER)))
             {
                 SendCastResult(SPELL_FAILED_NO_LIQUID);
@@ -1512,7 +1511,7 @@ void Spell::SelectImplicitCasterDestTargets(SpellEffectInfo const& spellEffectIn
             float ground = m_caster->GetMapHeight(x, y, z);
             float liquidLevel = VMAP_INVALID_HEIGHT_VALUE;
             LiquidData liquidData;
-            if (m_caster->GetMap()->GetLiquidStatus(m_caster->GetPhaseShift(), x, y, z, map_liquidHeaderTypeFlags::AllLiquids, &liquidData, m_caster->GetCollisionHeight()))
+            if (m_caster->GetMap()->GetLiquidStatus(m_caster->GetPhaseShift(), x, y, z, {}, &liquidData, m_caster->GetCollisionHeight()))
                 liquidLevel = liquidData.level;
 
             if (liquidLevel <= ground) // When there is no liquid Map::GetWaterOrGroundLevel returns ground level
@@ -3028,6 +3027,12 @@ void Spell::TargetInfo::DoDamageAndTriggers(Spell* spell)
 
                 if (effMask)
                     _spellHitTarget->_ApplyAura(aurApp, effMask);
+
+                if (aurApp->IsNeedClientUpdate() && aurApp->GetRemoveMode() == AURA_REMOVE_NONE)
+                {
+                    aurApp->ClientUpdate(false);
+                    _spellHitTarget->RemoveVisibleAuraUpdate(aurApp);
+                }
             }
         }
 
@@ -5349,8 +5354,8 @@ void Spell::TakeCastItem()
 
             int32 charges = m_CastItem->GetSpellCharges(itemEffect->LegacySlotIndex);
 
-            // item has charges left
-            if (charges)
+            // item has charges left for this slot
+            if (charges && itemEffect->SpellID == int32(m_spellInfo->Id))
             {
                 (charges > 0) ? --charges : ++charges;  // abs(charges) less at 1 after use
                 if (proto->GetMaxStackSize() == 1)
@@ -9331,7 +9336,7 @@ void SelectRandomInjuredTargets(std::list<WorldObject*>& targets, size_t maxTarg
         if (prioritizeGroupMembersOf && (!target->IsUnit() || target->ToUnit()->IsInRaidWith(prioritizeGroupMembersOf)))
             negativePoints |= 1 << NOT_GROUPED;
 
-        if (prioritizePlayers && !target->IsPlayer() && (!target->IsCreature() || !target->ToCreature()->HasFlag(CREATURE_STATIC_FLAG_4_TREAT_AS_RAID_UNIT_FOR_HELPFUL_SPELLS)))
+        if (prioritizePlayers && !target->IsPlayer() && (!target->IsCreature() || !target->ToCreature()->IsTreatedAsRaidUnit()))
             negativePoints |= 1 << NOT_PLAYER;
 
         if (!target->IsUnit() || target->ToUnit()->IsFullHealth())

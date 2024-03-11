@@ -112,6 +112,7 @@ namespace WorldPackets
 
     namespace AdventureMap
     {
+        class CheckIsAdventureMapPoiValid;
         class AdventureMapStartQuest;
     }
 
@@ -1761,6 +1762,7 @@ class TC_GAME_API WorldSession
         void HandleAdventureJournalUpdateSuggestions(WorldPackets::AdventureJournal::AdventureJournalUpdateSuggestions& updateSuggestions);
 
         // Adventure Map
+        void HandleCheckIsAdventureMapPoiValid(WorldPackets::AdventureMap::CheckIsAdventureMapPoiValid& CheckIsAdventureMapPoiValid);
         void HandleAdventureMapStartQuest(WorldPackets::AdventureMap::AdventureMapStartQuest& startQuest);
 
         // Toys
