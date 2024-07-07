@@ -47,16 +47,6 @@ public:
 
     ChatCommandTable GetCommands() const override
     {
-        static ChatCommandTable commentatorTable = {
-            { "name",   HandleGMCommentatorNameCommand,       rbac::RBAC_PERM_COMMAND_GM, Console::Yes },
-            { "",       HandleGMCommentatorCommand,           rbac::RBAC_PERM_COMMAND_GM, Console::Yes },
-        };
-
-        static ChatCommandTable cameraTable = {
-            { "name",   HandleGMCameraNameCommand,       rbac::RBAC_PERM_COMMAND_GM, Console::No },
-            { "",       HandleGMCameraCommand,           rbac::RBAC_PERM_COMMAND_GM, Console::No },
-        };
-
         static ChatCommandTable gmCommandTable =
         {
             { "chat",           HandleGMChatCommand,                    rbac::RBAC_PERM_COMMAND_GM_CHAT,        Console::No  },
@@ -75,8 +65,8 @@ public:
             { "mounts",         HandleGMRewardAllMountsCommand,         rbac::RBAC_PERM_COMMAND_GM,             Console::Yes },
             { "transmog",       HandleGMRewardAllTransmogCommand,       rbac::RBAC_PERM_COMMAND_GM,             Console::Yes },
             { "transmogset",    HandleGMAddTransmogSetCommand,          rbac::RBAC_PERM_COMMAND_GM,             Console::Yes },
-            { "commentator",    commentatorTable },
-            { "camera",         cameraTable },
+            { "commentator",    HandleGMCommentatorCommand,             rbac::RBAC_PERM_COMMAND_GM,             Console::Yes },
+            { "camera",         HandleGMCameraCommand,                  rbac::RBAC_PERM_COMMAND_GM,             Console::Yes },
         };
 
         static ChatCommandTable commandTable =
@@ -282,7 +272,7 @@ public:
         return true;
     }
 
-    static bool HandleGMCommentatorNameCommand(ChatHandler* handler, Optional<PlayerIdentifier> player)
+    static bool HandleGMCommentatorCommand(ChatHandler* handler, Optional<PlayerIdentifier> player)
     {
         if (!player)
             player = PlayerIdentifier::FromTargetOrSelf(handler);
@@ -310,25 +300,7 @@ public:
         return true;
     }
 
-    static bool HandleGMCommentatorCommand(ChatHandler* handler)
-    {
-        Player* target = handler->getSelectedPlayer();
-        bool enable = !target->HasPlayerFlag(PLAYER_FLAGS_UBER);
-
-        if (enable) {
-            target->SetPlayerFlag(PLAYER_FLAGS_UBER);
-            target->SetPlayerFlag(PLAYER_FLAGS_COMMENTATOR2);
-            handler->PSendSysMessage("Commentator flags added.");
-        } else {
-            target->RemovePlayerFlag(PLAYER_FLAGS_UBER);
-            target->RemovePlayerFlag(PLAYER_FLAGS_COMMENTATOR2);
-            handler->PSendSysMessage("Commentator flags removed.");
-        }
-
-        return true;
-    }
-
-    static bool HandleGMCameraNameCommand(ChatHandler* handler, Optional<PlayerIdentifier> player)
+    static bool HandleGMCameraCommand(ChatHandler* handler, Optional<PlayerIdentifier> player)
     {
         if (!player)
             player = PlayerIdentifier::FromTargetOrSelf(handler);
@@ -340,24 +312,6 @@ public:
 
         Player* target = handler->getSelectedPlayer();
         bool enable = !target->HasPlayerFlag(PLAYER_FLAGS_UBER);
-
-        if (enable) {
-            target->SetPlayerFlag(PLAYER_FLAGS_COMMENTATOR_CAMERA);
-            handler->PSendSysMessage("Camera flag added.");
-        }
-        else {
-            target->RemovePlayerFlag(PLAYER_FLAGS_COMMENTATOR_CAMERA);
-            handler->PSendSysMessage("Camera flag removed.");
-        }
-
-        return true;
-    }
-
-    static bool HandleGMCameraCommand(ChatHandler* handler)
-    {
-        Player* target = handler->getSelectedPlayer();
-
-        bool enable = !target->HasPlayerFlag(PLAYER_FLAGS_COMMENTATOR_CAMERA);
 
         if (enable) {
             target->SetPlayerFlag(PLAYER_FLAGS_COMMENTATOR_CAMERA);
