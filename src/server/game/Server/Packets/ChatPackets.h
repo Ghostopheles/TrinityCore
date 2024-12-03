@@ -178,7 +178,7 @@ namespace WorldPackets
             uint32 _Language = LANG_UNIVERSAL;
             ObjectGuid SenderGUID;
             ObjectGuid SenderGuildGUID;
-            ObjectGuid SenderAccountGUID;
+            ObjectGuid SenderWowAccount;
             ObjectGuid TargetGUID;
             uint32 SenderVirtualAddress = 0;
             uint32 TargetVirtualAddress = 0;
@@ -191,7 +191,7 @@ namespace WorldPackets
             uint16 _ChatFlags = 0;   ///< @see enum ChatFlags
             float DisplayTime = 0.0f;
             int32 SpellID = 0;
-            Optional<uint32> Unused_801;
+            Optional<uint32> BroadcastTextID;
             bool HideChatLog = false;
             bool FakeSenderName = false;
             Optional<ObjectGuid> ChannelGUID;

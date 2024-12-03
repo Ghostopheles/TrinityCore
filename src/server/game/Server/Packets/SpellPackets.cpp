@@ -201,7 +201,7 @@ ByteBuffer& operator>>(ByteBuffer& data, SpellCraftingReagent& optionalReagent)
     data >> optionalReagent.DataSlotIndex;
     data >> optionalReagent.Quantity;
     if (data.ReadBit())
-        optionalReagent.Unknown_1000 = data.read<uint8>();
+        optionalReagent.Source = data.read<uint8>();
 
     return data;
 }
@@ -225,6 +225,7 @@ ByteBuffer& operator>>(ByteBuffer& buffer, SpellCastRequest& request)
     request.OptionalCurrencies.resize(buffer.read<uint32>());
     request.OptionalReagents.resize(buffer.read<uint32>());
     request.RemovedModifications.resize(buffer.read<uint32>());
+    buffer >> request.CraftingFlags;
 
     for (SpellExtraCurrencyCost& optionalCurrency : request.OptionalCurrencies)
         buffer >> optionalCurrency;
@@ -339,8 +340,8 @@ ByteBuffer& operator<<(ByteBuffer& data, SpellHitStatus const& spellHitStatus)
 
 ByteBuffer& operator<<(ByteBuffer& data, SpellPowerData const& spellPowerData)
 {
-    data << int32(spellPowerData.Cost);
     data << int8(spellPowerData.Type);
+    data << int32(spellPowerData.Cost);
     return data;
 }
 
@@ -450,14 +451,14 @@ WorldPacket const* SpellGo::Write()
 ByteBuffer& operator<<(ByteBuffer& data, LearnedSpellInfo const& learnedSpellInfo)
 {
     data << int32(learnedSpellInfo.SpellID);
-    data.WriteBit(learnedSpellInfo.IsFavorite);
-    data.WriteBit(learnedSpellInfo.field_8.has_value());
+    data.WriteBit(learnedSpellInfo.Favorite);
+    data.WriteBit(learnedSpellInfo.EquipableSpellInvSlot.has_value());
     data.WriteBit(learnedSpellInfo.Superceded.has_value());
     data.WriteBit(learnedSpellInfo.TraitDefinitionID.has_value());
     data.FlushBits();
 
-    if (learnedSpellInfo.field_8)
-        data << int32(*learnedSpellInfo.field_8);
+    if (learnedSpellInfo.EquipableSpellInvSlot)
+        data << int32(*learnedSpellInfo.EquipableSpellInvSlot);
 
     if (learnedSpellInfo.Superceded)
         data << int32(*learnedSpellInfo.Superceded);
@@ -644,13 +645,13 @@ ByteBuffer& operator<<(ByteBuffer& data, SpellHistoryEntry const& historyEntry)
     data << int32(historyEntry.RecoveryTime);
     data << int32(historyEntry.CategoryRecoveryTime);
     data << float(historyEntry.ModRate);
-    data.WriteBit(historyEntry.unused622_1.has_value());
-    data.WriteBit(historyEntry.unused622_2.has_value());
+    data.WriteBit(historyEntry.RecoveryTimeStartOffset.has_value());
+    data.WriteBit(historyEntry.CategoryRecoveryTimeStartOffset.has_value());
     data.WriteBit(historyEntry.OnHold);
-    if (historyEntry.unused622_1)
-        data << uint32(*historyEntry.unused622_1);
-    if (historyEntry.unused622_2)
-        data << uint32(*historyEntry.unused622_2);
+    if (historyEntry.RecoveryTimeStartOffset)
+        data << uint32(*historyEntry.RecoveryTimeStartOffset);
+    if (historyEntry.CategoryRecoveryTimeStartOffset)
+        data << uint32(*historyEntry.CategoryRecoveryTimeStartOffset);
     data.FlushBits();
 
     return data;
@@ -750,6 +751,7 @@ WorldPacket const* PlayOrphanSpellVisual::Write()
     _worldPacket << SourceRotation;
     _worldPacket << TargetLocation;
     _worldPacket << Target;
+    _worldPacket << TargetTransport;
     _worldPacket << int32(SpellVisualID);
     _worldPacket << float(TravelSpeed);
     _worldPacket << float(LaunchDelay);
@@ -1073,6 +1075,16 @@ WorldPacket const* CustomLoadScreen::Write()
 WorldPacket const* MountResult::Write()
 {
     _worldPacket << int32(Result);
+
+    return &_worldPacket;
+}
+
+WorldPacket const* ApplyMountEquipmentResult::Write()
+{
+    _worldPacket << ItemGUID;
+    _worldPacket << int32(ItemID);
+    _worldPacket << Bits<1>(Result);
+    _worldPacket.FlushBits();
 
     return &_worldPacket;
 }
