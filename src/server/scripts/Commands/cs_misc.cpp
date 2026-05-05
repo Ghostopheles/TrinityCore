@@ -115,16 +115,8 @@ public:
             { "unstuck",          HandleUnstuckCommand,          rbac::RBAC_PERM_COMMAND_UNSTUCK,          Console::Yes },
             { "wchange",          HandleChangeWeather,           rbac::RBAC_PERM_COMMAND_WCHANGE,          Console::No },
             { "mailbox",          HandleMailBoxCommand,          rbac::RBAC_PERM_COMMAND_MAILBOX,          Console::No },
-            { "newdatabuild",     HandleNewDataBuildCommand,     rbac::RBAC_PERM_COMMAND_MAILBOX,          Console::No },
         };
         return commandTable;
-    }
-
-    static bool HandleNewDataBuildCommand(ChatHandler * handler, std::string buildConfig, std::string cdnConfig)
-    {
-        sWorld->SendGlobalMessage(WorldPackets::Misc::NewDataBuild(stringToUint8x16(buildConfig), stringToUint8x16(cdnConfig)).Write());
-        return true;
-        
     }
 
     static std::array<std::uint8_t, 16> stringToUint8x16(std::string input)
@@ -133,22 +125,22 @@ public:
         {
             throw std::invalid_argument("Bad length: expected 32 nibbles, got " + std::to_string(input.size()));
         }
-        
+
         std::array<std::uint8_t, 16> result;
-        
+
         auto inputIt{ input.begin() };
         auto const inputEnd{ input.end() };
         auto outputIt{ result.begin() };
-        
+
         for (; inputIt != inputEnd; inputIt += 2, ++outputIt)
         {
             *outputIt = nibbleCharToUint8(inputIt[0]) << 4 |
             nibbleCharToUint8(inputIt[1]) << 0;
         }
-        
+
             return result;
     }
-    
+
     static std::uint8_t nibbleCharToUint8(char input)
     {
         if (input >= '0' && input <= '9') return input - '0';

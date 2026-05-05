@@ -69,6 +69,11 @@ void ChatMessageChannel::Read()
     _worldPacket >> SizedString::Data(Text);
 }
 
+void CommentatorModeEnable::Read()
+{
+    _worldPacket >> Action;
+}
+
 ByteBuffer& operator>>(ByteBuffer& data, ChatAddonMessageParams& params)
 {
     data >> SizedString::BitsSize<5>(params.Prefix);
